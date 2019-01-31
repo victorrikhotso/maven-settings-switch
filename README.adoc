@@ -1,0 +1,27 @@
+= maven-settings-switch
+
+Switch maven settings using different settings files for work and home
+
+
+[source,bash]
+----
+$ maven-settings-switch -h
+
+Usage of maven-settings-switch:
+  -env
+    	Use environment variables true or false (defaults to false)
+    		 Environment variables supported:
+    		'default_maven_setting' for maven settings file path
+    		'home_maven_setting' for maven home settings file path
+    		'work_maven_setting' for maven work settings file path
+  -homeIPRange string
+    	-homeIPRange=192.168.1 (default "192.168.1")
+  -homePath string
+    	-homePath=/home/dev/.m2/settings-home.xml
+  -settingsPath string
+    	-settingsPath=/home/dev/.m2/settings.xml
+  -workIPRange string
+    	-workIPRange=10.30 (default "10.30")
+  -workPath string
+    	 -workPath=/home/dev/.m2/settings-work.xml
+----
