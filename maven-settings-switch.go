@@ -7,10 +7,10 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/user"
 	"strings"
 )
 
-const defaultSettingsFilePath string = "/home/dev/.m2/settings.xml"
 const workSettingsFilePath string = "/home/dev/.m2/settings-work.xml"
 const homeSettingsFilePath string = "/home/dev/.m2/settings-home.xml"
 
@@ -33,16 +33,19 @@ func main() {
 	flag.Parse()
 
 	ip, err := externalIP()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	CheckIfError(err)
 	fmt.Printf("IP is %s \n", ip)
 
 	// Assign Defaults
 	workSettingsFilename := workSettingsFilePath
 	homeSettingsFilename := homeSettingsFilePath
-	defaultSettingsFilename := defaultSettingsFilePath
+
+	usr, err := user.Current()
+	CheckIfError(err)
+	fmt.Printf("User's Home Directory : %s \n", usr.HomeDir)
+
+	defaultSettingsFilename := usr.HomeDir + "/.m2/settings.xml"
+
 	// Show variables used
 	fmt.Println("Using system environment variables :", *boolPtr)
 	if *boolPtr == false {
@@ -71,14 +74,19 @@ func main() {
 
 	// Check home settings file
 	if _, err := os.Stat(homeSettingsFilename); os.IsNotExist(err) {
-		fmt.Printf("home settings file does not exist %s \n", homeSettingsFilename)
+		msg := fmt.Sprintf("home settings file does not exist %s \n", homeSettingsFilename)
+		fmt.Println(msg)
+		CheckIfError(errors.New(msg))
 	} else {
 		fmt.Printf("home settings file exists - %s \n", homeSettingsFilename)
 	}
 
 	// Check work settings file
 	if _, err := os.Stat(workSettingsFilename); os.IsNotExist(err) {
-		fmt.Printf("Work settings file does not exist %s \n", workSettingsFilename)
+		msg := fmt.Sprintf("Work settings file does not exist %s \n", workSettingsFilename)
+		fmt.Println(msg)
+		CheckIfError(errors.New(msg))
+
 	} else {
 		fmt.Printf("Work settings file exists - %s \n", workSettingsFilename)
 	}
@@ -88,6 +96,7 @@ func main() {
 		err := copyFiles(homeSettingsFilename, defaultSettingsFilename)
 		if err != nil {
 			fmt.Printf("File copying failed: %q\n", err)
+			CheckIfError(err)
 		}
 	}
 
@@ -96,6 +105,7 @@ func main() {
 		err := copyFiles(workSettingsFilename, defaultSettingsFilename)
 		if err != nil {
 			fmt.Printf("File copying failed: %q\n", err)
+			CheckIfError(err)
 		}
 	}
 
@@ -109,15 +119,14 @@ func copyFiles(source string, destination string) error {
 
 	input, err := ioutil.ReadFile(sourceFile)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		fmt.Println("File cannot be read", sourceFile)
+		CheckIfError(err)
 	}
 
 	err = ioutil.WriteFile(destinationFile, input, 0644)
 	if err != nil {
 		fmt.Println("Error creating", destinationFile)
-		fmt.Println(err)
-		return err
+		CheckIfError(err)
 	}
 
 	return err
@@ -159,4 +168,14 @@ func externalIP() (string, error) {
 		}
 	}
 	return "", errors.New("Are you connected to the network?")
+}
+
+// CheckIfError - check for errors then exit
+func CheckIfError(err error) {
+	if err == nil {
+		return
+	}
+
+	fmt.Printf("\x1b[31;1m%s\x1b[0m\n", fmt.Sprintf("error: %s", err))
+	os.Exit(1)
 }
